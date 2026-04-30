@@ -32,7 +32,10 @@ class AntiGravityScene {
     init() {
         // Scene setup
         this.scene = new THREE.Scene();
-        this.scene.fog = new THREE.FogExp2(0x121212, 0.0015);
+        
+        // Initial fog based on theme
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        this.scene.fog = new THREE.FogExp2(isDark ? 0x121212 : 0xf0f7f2, 0.0015);
 
         // Camera setup
         this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -272,9 +275,50 @@ class AntiGravityScene {
 // ==========================================================================
 document.addEventListener('DOMContentLoaded', () => {
     
+    // 0. Theme Toggle Logic
+    const themeToggle = document.getElementById('themeToggle');
+    const htmlElement = document.documentElement;
+    const themeIcon = themeToggle ? themeToggle.querySelector('i') : null;
+
+    // Check for saved theme preference
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    htmlElement.setAttribute('data-theme', savedTheme);
+    updateThemeIcon(savedTheme);
+
+    if (themeToggle) {
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = htmlElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            htmlElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateThemeIcon(newTheme);
+            
+            // Dispatch a custom event for the 3D scene to update its colors
+            window.dispatchEvent(new CustomEvent('themeChanged', { detail: newTheme }));
+        });
+    }
+
+    function updateThemeIcon(theme) {
+        if (!themeIcon) return;
+        if (theme === 'dark') {
+            themeIcon.className = 'fas fa-sun';
+        } else {
+            themeIcon.className = 'fas fa-moon';
+        }
+    }
+
     // 1. Initialize Three.js Scene
-    new AntiGravityScene();
+    const antiGravityScene = new AntiGravityScene();
     
+    // Listen for theme changes to update 3D scene fog
+    window.addEventListener('themeChanged', (e) => {
+        if (antiGravityScene && antiGravityScene.scene) {
+            const isDark = e.detail === 'dark';
+            antiGravityScene.scene.fog.color.setHex(isDark ? 0x121212 : 0xf0f7f2);
+        }
+    });
+
     // 2. Navbar Scroll Effect
     const navbar = document.getElementById('navbar');
     window.addEventListener('scroll', () => {
