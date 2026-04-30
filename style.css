@@ -83,6 +83,12 @@ ul {
     padding: 100px 0;
 }
 
+@media (max-width: 768px) {
+    .section-padding {
+        padding: 60px 0;
+    }
+}
+
 .bg-darker {
     background-color: var(--bg-darker);
     background-image: radial-gradient(circle at 0% 50%, rgba(111, 207, 122, 0.03) 0%, transparent 50%);
@@ -158,6 +164,12 @@ ul {
     font-size: 3rem;
     color: var(--text-main);
     margin-bottom: 15px;
+}
+
+@media (max-width: 768px) {
+    .section-header h2 {
+        font-size: 2.2rem;
+    }
 }
 
 .section-header .line {
@@ -1192,6 +1204,19 @@ ul {
         grid-template-columns: 1fr;
         gap: 40px;
     }
+
+    body {
+        overflow-x: hidden;
+        width: 100vw;
+    }
+
+    .container {
+        padding: 0 1.2rem;
+    }
+
+    .value-card {
+        padding: 30px 20px;
+    }
 }
 
 @media (max-width: 480px) {
@@ -1200,11 +1225,17 @@ ul {
     }
 
     .hero h1 {
-        font-size: 2.8rem;
+        font-size: 2.4rem;
     }
 
     .hero-btns {
         flex-direction: column;
+        width: 100%;
+    }
+
+    .hero-btns .btn {
+        width: 100%;
+        margin-bottom: 10px;
     }
 
     .form-row {
