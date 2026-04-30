@@ -629,7 +629,7 @@ ul {
     transform-style: preserve-3d;
 }
 
-/* .gallery-img {
+.gallery-img {
     position: absolute;
     top: -10px;
     left: -10px;
@@ -638,13 +638,6 @@ ul {
     background-size: cover;
     background-position: center;
     transition: transform 0.5s ease;
-} */
-.gallery-img {
-    width: 100%;
-    height: 260px;
-    background-size: cover;
-    background-position: center;
-    border-radius: 14px;
 }
 
 .gallery-item:hover .gallery-img {
@@ -674,7 +667,7 @@ ul {
 
 .gallery-info h3 {
     font-size: 1.5rem;
-    color: var(--text-main);
+    color: #ffffff; /* Always white due to dark gradient overlay */
     transform: translateY(10px);
     transition: var(--transition);
 }
@@ -1151,7 +1144,17 @@ ul {
     }
     
     .btn-nav {
-        padding: 8px 15px;
+        padding: 0;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    
+    .btn-nav i {
+        margin: 0;
     }
 
     .theme-toggle {
