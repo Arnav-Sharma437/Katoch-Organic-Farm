@@ -26,6 +26,9 @@ yarn-error.log*
 # local env files
 .env*.local
 
+# local only — contains secrets; never commit
+vercel-env-copy-paste.txt
+
 # vercel
 .vercel
 
