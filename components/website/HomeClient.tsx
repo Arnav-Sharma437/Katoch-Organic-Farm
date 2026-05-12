@@ -159,7 +159,15 @@ export default function HomeClient({ gallery, testimonials }: Props) {
       <nav className="navbar" id="navbar">
         <div className="nav-container">
           <Link href="#home" className="logo">
-            <Image src={LOGO_URL} alt="Katoch Organic Farm Logo" width={160} height={100} priority />
+            <Image
+              src={LOGO_URL}
+              alt="Katoch Organic Farm Logo"
+              width={160}
+              height={100}
+              priority
+              className="logo-img"
+              sizes="(max-width: 768px) 120px, 160px"
+            />
           </Link>
           <ul className="nav-links">
             <li>
