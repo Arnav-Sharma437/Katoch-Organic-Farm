@@ -11,8 +11,8 @@
     --text-muted: #4a5c50;
     --border-color: rgba(77, 166, 87, 0.2);
 
-    --font-heading: 'Playfair Display', serif;
-    --font-body: 'Outfit', sans-serif;
+    --font-heading: var(--font-playfair), "Playfair Display", serif;
+    --font-body: var(--font-outfit), "Outfit", sans-serif;
 
     --transition: all 0.3s ease;
 }
