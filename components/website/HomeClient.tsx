@@ -16,6 +16,35 @@ const HeroWebGL = dynamic(() => import("@/components/website/HeroWebGL"), { ssr:
 const LOGO_URL =
   "https://arnav-sharma437.github.io/Katoch-Organic-Farm/images/logo.jpg";
 
+const JOURNEY_STEPS = [
+  {
+    year: "2017",
+    text: "Farm founded in Kangra with a mission for organic excellence.",
+    image:
+      "https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=800&q=80",
+  },
+  {
+    year: "2019",
+    text: "Expanded to 10+ acres. Introduced regenerative farming techniques.",
+    image: "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=800&q=80",
+  },
+  {
+    year: "2021",
+    text: "Launched school tours and farmer collaboration workshops.",
+    image: "https://images.unsplash.com/photo-1592982537447-6f2a6a0c5c10?auto=format&fit=crop&w=800&q=80",
+  },
+  {
+    year: "2023",
+    text: "Recognised as model organic farm in Himachal Pradesh.",
+    image: "https://images.unsplash.com/photo-1530507629858-e4977d30e9e0?auto=format&fit=crop&w=800&q=80",
+  },
+  {
+    year: "2026",
+    text: "Working towards making India a Global Food Bowl.",
+    image: "https://images.unsplash.com/photo-1595804561066-51ed7d3eb84e?auto=format&fit=crop&w=800&q=80",
+  },
+] as const;
+
 type Props = {
   gallery: GalleryItem[];
   testimonials: TestimonialItem[];
@@ -352,56 +381,25 @@ export default function HomeClient({ gallery, testimonials }: Props) {
 
           <div className="timeline">
             <div id="timeline-preview" className="timeline-preview" />
-            <div
-              className="timeline-item fade-up"
-              data-image="https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=600&q=80"
-            >
-              <div className="timeline-dot" />
-              <div className="timeline-date">2017</div>
-              <div className="timeline-content">
-                <p>Farm founded in Kangra with a mission for organic excellence.</p>
+            {JOURNEY_STEPS.map((step) => (
+              <div key={step.year} className="timeline-item fade-up" data-image={step.image}>
+                <div className="timeline-dot" />
+                <div className="timeline-date">{step.year}</div>
+                <div className="timeline-content">
+                  <div className="timeline-mobile-visual">
+                    <Image
+                      src={step.image}
+                      alt={`${step.year} — farm journey photo`}
+                      width={800}
+                      height={500}
+                      className="timeline-mobile-thumb"
+                      sizes="(max-width: 768px) 90vw, 0px"
+                    />
+                  </div>
+                  <p>{step.text}</p>
+                </div>
               </div>
-            </div>
-            <div
-              className="timeline-item fade-up"
-              data-image="https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=600&q=80"
-            >
-              <div className="timeline-dot" />
-              <div className="timeline-date">2019</div>
-              <div className="timeline-content">
-                <p>Expanded to 10+ acres. Introduced regenerative farming techniques.</p>
-              </div>
-            </div>
-            <div
-              className="timeline-item fade-up"
-              data-image="https://images.unsplash.com/photo-1592982537447-6f2a6a0c5c10?auto=format&fit=crop&w=600&q=80"
-            >
-              <div className="timeline-dot" />
-              <div className="timeline-date">2021</div>
-              <div className="timeline-content">
-                <p>Launched school tours and farmer collaboration workshops.</p>
-              </div>
-            </div>
-            <div
-              className="timeline-item fade-up"
-              data-image="https://images.unsplash.com/photo-1530507629858-e4977d30e9e0?auto=format&fit=crop&w=600&q=80"
-            >
-              <div className="timeline-dot" />
-              <div className="timeline-date">2023</div>
-              <div className="timeline-content">
-                <p>Recognised as model organic farm in Himachal Pradesh.</p>
-              </div>
-            </div>
-            <div
-              className="timeline-item fade-up"
-              data-image="https://images.unsplash.com/photo-1595804561066-51ed7d3eb84e?auto=format&fit=crop&w=600&q=80"
-            >
-              <div className="timeline-dot" />
-              <div className="timeline-date">2026</div>
-              <div className="timeline-content">
-                <p>Working towards making India a Global Food Bowl.</p>
-              </div>
-            </div>
+            ))}
             <div className="timeline-line" />
           </div>
         </div>

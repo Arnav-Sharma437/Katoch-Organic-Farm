@@ -47,6 +47,17 @@ export default function AdminSidebar() {
         <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Admin</p>
         <p className="font-serif text-lg font-semibold text-[#2d5a27]">Katoch Organic Farm</p>
       </div>
+      <div className="border-b border-slate-100 px-3 py-3">
+        <Link
+          href="/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-center gap-2 rounded-lg border border-[#2d5a27]/25 bg-[#f4faf5] px-3 py-2.5 text-sm font-semibold text-[#2d5a27] transition hover:border-[#2d5a27]/50 hover:bg-[#e8f2ea]"
+        >
+          <i className="fas fa-external-link-alt text-xs" aria-hidden />
+          View website
+        </Link>
+      </div>
       <nav className="flex flex-1 flex-col gap-1 p-3">
         {links.map((l) => {
           const active = pathname === l.href;
