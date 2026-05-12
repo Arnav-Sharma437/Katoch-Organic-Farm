@@ -4,14 +4,17 @@ import { COOKIE_NAME, signAdminJwt } from "@/lib/auth";
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const username = body?.username as string | undefined;
-    const password = body?.password as string | undefined;
+    const username = String(body?.username ?? "").trim();
+    const password = String(body?.password ?? "").trim();
 
-    const adminUser = process.env.ADMIN_USERNAME;
-    const adminPass = process.env.ADMIN_PASSWORD;
+    const adminUser = (process.env.ADMIN_USERNAME ?? "").trim();
+    const adminPass = (process.env.ADMIN_PASSWORD ?? "").trim();
 
     if (!adminUser || !adminPass) {
-      return NextResponse.json({ error: "Server misconfiguration" }, { status: 500 });
+      return NextResponse.json(
+        { error: "Admin login is not configured (set ADMIN_USERNAME and ADMIN_PASSWORD on the server)." },
+        { status: 500 }
+      );
     }
 
     if (username !== adminUser || password !== adminPass) {
