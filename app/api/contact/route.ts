@@ -3,6 +3,7 @@ import { connectDB } from "@/lib/mongodb";
 import Contact from "@/models/Contact";
 import { assertAdminFromCookies } from "@/lib/auth";
 import { isResendConfigured, resend } from "@/lib/resend";
+import { parseEmailRecipients } from "@/lib/parse-email-list";
 
 function escHtml(s: string) {
   return s
@@ -67,10 +68,20 @@ export async function POST(request: Request) {
       timeStyle: "short",
     });
 
-    const fromEmail = process.env.RESEND_FROM_EMAIL;
-    const toEmail = process.env.RESEND_TO_EMAIL;
+    const fromEmail = String(process.env.RESEND_FROM_EMAIL ?? "").trim();
+    /** One Resend API call per admin address (same shape as the visitor auto-reply). */
+    const recipients = parseEmailRecipients(process.env.RESEND_TO_EMAIL);
 
-    if (!isResendConfigured() || !resend || !fromEmail || !toEmail) {
+    if (!isResendConfigured() || !fromEmail || recipients.length === 0 || !resend) {
+      if (!isResendConfigured()) {
+        console.warn("[contact] Email skipped: set RESEND_API_KEY (Resend dashboard → API Keys).");
+      } else if (!fromEmail) {
+        console.warn("[contact] Email skipped: set RESEND_FROM_EMAIL to a verified sender in Resend.");
+      } else if (recipients.length === 0) {
+        console.warn(
+          "[contact] Email skipped: set RESEND_TO_EMAIL to your inbox (e.g. you@gmail.com). Comma-separated for multiple.",
+        );
+      }
       return NextResponse.json({
         success: true,
         message: "Message sent successfully",
@@ -78,6 +89,8 @@ export async function POST(request: Request) {
         emailSkipped: true,
       });
     }
+
+    const mail = resend;
 
     const ownerHtml = `
 <!DOCTYPE html>
@@ -136,26 +149,36 @@ export async function POST(request: Request) {
 </body>
 </html>`;
 
-    const [toUser, toVisitor] = await Promise.all([
-        resend.emails.send({
-          from: fromEmail,
-          to: toEmail,
-          subject: `New website message from ${firstName} ${lastName}`,
-          html: ownerHtml,
-        }),
-        resend.emails.send({
-          from: fromEmail,
-          to: email,
-          subject: "We received your message — Katoch Organic Farm",
-          html: autoReplyHtml,
-        }),
-    ]);
+    const visitorSend = mail.emails.send({
+      from: fromEmail,
+      to: email,
+      subject: "We received your message — Katoch Organic Farm",
+      html: autoReplyHtml,
+    });
+    const adminSends = recipients.map((to) =>
+      mail.emails.send({
+        from: fromEmail,
+        to,
+        subject: `New website message from ${firstName} ${lastName}`,
+        html: ownerHtml,
+      }),
+    );
+    const results = await Promise.all([visitorSend, ...adminSends]);
+    const visitorResult = results[0];
+    const adminResults = results.slice(1);
 
-    if (toUser.error || toVisitor.error) {
-      console.error(toUser.error ?? toVisitor.error);
+    const failedAdmin = adminResults
+      .map((r, i) => (r.error ? { to: recipients[i], error: r.error } : null))
+      .filter((x): x is { to: string; error: NonNullable<(typeof adminResults)[0]["error"]> } => x !== null);
+
+    if (visitorResult.error || failedAdmin.length > 0) {
+      console.error("[contact] Resend errors", {
+        visitor: visitorResult.error,
+        adminFailures: failedAdmin,
+      });
       return NextResponse.json(
         { error: "Message saved but email could not be sent. Please try again later." },
-        { status: 502 }
+        { status: 502 },
       );
     }
 

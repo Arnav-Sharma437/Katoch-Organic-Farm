@@ -5,6 +5,7 @@ import { FormEvent, useState } from "react";
 export default function ContactForm() {
   const [status, setStatus] = useState<"idle" | "sending" | "success" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState("");
+  const [successDetail, setSuccessDetail] = useState<"emailed" | "savedOnly">("emailed");
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -30,6 +31,8 @@ export default function ContactForm() {
         setErrorMessage((data as { error?: string }).error ?? "Something went wrong. Please try again.");
         return;
       }
+      const skipped = Boolean((data as { emailSkipped?: boolean }).emailSkipped);
+      setSuccessDetail(skipped ? "savedOnly" : "emailed");
       setStatus("success");
       form.reset();
     } catch {
@@ -42,7 +45,17 @@ export default function ContactForm() {
     <div className="contact-form fade-up">
       {status === "success" ? (
         <p className="mb-4 rounded-lg border border-[var(--border-color)] bg-[var(--bg-card)] p-4 text-[var(--primary-color)]">
-          Your message has been sent! We&apos;ll get back to you soon.
+          {successDetail === "emailed" ? (
+            <>Your message has been sent! We&apos;ll get back to you soon.</>
+          ) : (
+            <>
+              Your message was received and we&apos;ll reply soon. If you need us right away, email{" "}
+              <a href="mailto:katochorganic0024@gmail.com" className="underline">
+                katochorganic0024@gmail.com
+              </a>
+              .
+            </>
+          )}
         </p>
       ) : null}
       {status === "error" ? (
