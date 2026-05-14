@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import Testimonial from "@/models/Testimonial";
 import { assertAdminFromCookies } from "@/lib/auth";
+import { normalizeStoredVisible, visibleForCreate } from "@/lib/testimonial-visibility";
 
 function serializePublic(doc: {
   _id: unknown;
@@ -21,14 +22,14 @@ function serializeAdmin(doc: {
   _id: unknown;
   name: string;
   quote: string;
-  isVisible: boolean;
+  isVisible?: boolean;
   order: number;
 }) {
   return {
     id: String(doc._id),
     name: doc.name,
     quote: doc.quote,
-    isVisible: doc.isVisible,
+    isVisible: normalizeStoredVisible(doc.isVisible),
     order: doc.order,
   };
 }
@@ -43,7 +44,7 @@ export async function GET() {
       return NextResponse.json(items.map((d) => serializeAdmin(d as never)));
     }
 
-    const items = await Testimonial.find({ isVisible: true })
+    const items = await Testimonial.find({ isVisible: { $ne: false } })
       .sort({ order: 1, createdAt: 1 })
       .lean();
     return NextResponse.json(items.map((d) => serializePublic(d as never)));
@@ -61,7 +62,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     const name = String(body?.name ?? "").trim();
     const quote = String(body?.quote ?? "").trim();
-    const isVisible = Boolean(body?.isVisible);
+    const isVisible = visibleForCreate(body?.isVisible);
     let order =
       typeof body?.order === "number" && !Number.isNaN(body.order)
         ? body.order

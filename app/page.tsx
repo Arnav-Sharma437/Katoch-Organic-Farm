@@ -1,5 +1,5 @@
 import HomeClient from "@/components/website/HomeClient";
-import { internalServerFetch } from "@/lib/server-fetch";
+import { internalServerFetch, internalServerFetchPublic } from "@/lib/server-fetch";
 import type { GalleryItem } from "@/components/website/Gallery";
 import type { TestimonialItem } from "@/components/website/Testimonials";
 
@@ -15,7 +15,7 @@ export default async function HomePage() {
   }
 
   try {
-    const tRes = await internalServerFetch("/api/testimonials");
+    const tRes = await internalServerFetchPublic("/api/testimonials");
     if (tRes.ok) testimonials = await tRes.json();
   } catch {
     testimonials = [];

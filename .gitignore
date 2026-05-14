@@ -33,3 +33,4 @@ vercel-env-copy-paste.txt
 .vercel
 
 # typescript
+*.tsbuildinfo

@@ -15,3 +15,17 @@ export function internalServerFetch(path: string, init?: RequestInit) {
     cache: "no-store",
   });
 }
+
+/**
+ * Same-host fetch without forwarding cookies. Use for public homepage data so an admin session
+ * does not widen API responses (e.g. testimonials visibility).
+ */
+export function internalServerFetchPublic(path: string, init?: RequestInit) {
+  const h = headers();
+  const host = h.get("host") ?? "localhost:3000";
+  const proto = h.get("x-forwarded-proto") ?? "http";
+  return fetch(`${proto}://${host}${path}`, {
+    ...init,
+    cache: "no-store",
+  });
+}

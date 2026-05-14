@@ -2,19 +2,20 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import Testimonial from "@/models/Testimonial";
 import { assertAdminFromCookies } from "@/lib/auth";
+import { normalizeStoredVisible, parseIncomingVisible } from "@/lib/testimonial-visibility";
 
 function serializeAdmin(doc: {
   _id: unknown;
   name: string;
   quote: string;
-  isVisible: boolean;
+  isVisible?: boolean;
   order: number;
 }) {
   return {
     id: String(doc._id),
     name: doc.name,
     quote: doc.quote,
-    isVisible: doc.isVisible,
+    isVisible: normalizeStoredVisible(doc.isVisible),
     order: doc.order,
   };
 }
@@ -31,7 +32,10 @@ export async function PUT(request: Request, { params }: { params: { id: string }
 
     if (body.name !== undefined) doc.name = String(body.name).trim();
     if (body.quote !== undefined) doc.quote = String(body.quote).trim();
-    if (body.isVisible !== undefined) doc.isVisible = Boolean(body.isVisible);
+    const vis = parseIncomingVisible(body.isVisible);
+    if (vis !== undefined) {
+      doc.set("isVisible", vis);
+    }
     if (body.order !== undefined) doc.order = Number(body.order) || 0;
 
     await doc.save();
