@@ -14,6 +14,24 @@ function escHtml(s: string) {
     .replace(/'/g, "&#039;");
 }
 
+/** Resend accepts `Name <email@domain.com>`; bare addresses still work but this is clearer. */
+function formatResendFrom(raw: string) {
+  const trimmed = raw.trim();
+  if (/<[^>]+@[^>]+>/.test(trimmed)) return trimmed;
+  return `Katoch Organic Farm <${trimmed}>`;
+}
+
+type ResendError = { message?: string; name?: string; statusCode?: number };
+
+function logResendFailure(label: string, err: ResendError | null | undefined) {
+  if (!err) return;
+  console.error(`[contact] ${label}`, {
+    message: err.message,
+    name: err.name,
+    statusCode: err.statusCode,
+  });
+}
+
 function serialize(doc: {
   _id: unknown;
   firstName: string;
@@ -91,6 +109,9 @@ export async function POST(request: Request) {
     }
 
     const mail = resend;
+    const from = formatResendFrom(fromEmail);
+    const ownerSubject = `New website message from ${firstName} ${lastName}`;
+    const visitorSubject = "We received your message — Katoch Organic Farm";
 
     const ownerHtml = `
 <!DOCTYPE html>
@@ -149,37 +170,61 @@ export async function POST(request: Request) {
 </body>
 </html>`;
 
-    const visitorSend = mail.emails.send({
-      from: fromEmail,
-      to: email,
-      subject: "We received your message — Katoch Organic Farm",
-      html: autoReplyHtml,
-    });
-    const adminSends = recipients.map((to) =>
-      mail.emails.send({
-        from: fromEmail,
-        to,
-        subject: `New website message from ${firstName} ${lastName}`,
-        html: ownerHtml,
-      }),
-    );
-    const results = await Promise.all([visitorSend, ...adminSends]);
-    const visitorResult = results[0];
-    const adminResults = results.slice(1);
+    const adminBase = {
+      from,
+      reply_to: email,
+      subject: ownerSubject,
+      html: ownerHtml,
+    };
 
-    const failedAdmin = adminResults
-      .map((r, i) => (r.error ? { to: recipients[i], error: r.error } : null))
-      .filter((x): x is { to: string; error: NonNullable<(typeof adminResults)[0]["error"]> } => x !== null);
+    // Admin inbox alert is required; visitor auto-reply is best-effort only.
+    let adminOk = false;
+    const adminFailures: { to: string; error: ResendError }[] = [];
 
-    if (visitorResult.error || failedAdmin.length > 0) {
-      console.error("[contact] Resend errors", {
-        visitor: visitorResult.error,
-        adminFailures: failedAdmin,
+    if (recipients.length === 1) {
+      const r = await mail.emails.send({ ...adminBase, to: recipients[0] });
+      if (r.error) adminFailures.push({ to: recipients[0], error: r.error });
+      else adminOk = true;
+    } else {
+      const combined = await mail.emails.send({
+        ...adminBase,
+        to: recipients[0],
+        bcc: recipients.slice(1),
       });
+      if (!combined.error) {
+        adminOk = true;
+      } else {
+        logResendFailure("Admin bcc send failed, retrying per recipient", combined.error);
+        const perRecipient = await Promise.all(
+          recipients.map((to) => mail.emails.send({ ...adminBase, to })),
+        );
+        perRecipient.forEach((r, i) => {
+          if (r.error) adminFailures.push({ to: recipients[i], error: r.error });
+          else adminOk = true;
+        });
+      }
+    }
+
+    if (!adminOk) {
+      console.error("[contact] All admin notifications failed", { adminFailures });
       return NextResponse.json(
         { error: "Message saved but email could not be sent. Please try again later." },
         { status: 502 },
       );
+    }
+
+    if (adminFailures.length > 0) {
+      console.warn("[contact] Some admin notifications failed", { adminFailures });
+    }
+
+    const visitorResult = await mail.emails.send({
+      from,
+      to: email,
+      subject: visitorSubject,
+      html: autoReplyHtml,
+    });
+    if (visitorResult.error) {
+      logResendFailure("Visitor auto-reply failed (non-fatal)", visitorResult.error);
     }
 
     return NextResponse.json({
