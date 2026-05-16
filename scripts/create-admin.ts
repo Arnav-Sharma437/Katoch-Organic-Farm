@@ -1,6 +1,10 @@
+import dns from "node:dns";
 import { config } from "dotenv";
 import mongoose from "mongoose";
 import { createAdminUser } from "../lib/admin-users";
+
+// Some networks block ISP DNS SRV lookups for MongoDB Atlas.
+dns.setServers(["8.8.8.8", "1.1.1.1"]);
 
 config({ path: ".env.local" });
 
