@@ -15,20 +15,21 @@ async function main() {
     process.exit(1);
   }
 
-  const [, , usernameArg, passwordArg] = process.argv;
+  const [, , usernameArg, passwordArg, emailArg] = process.argv;
   const username = usernameArg ?? process.env.ADMIN_USERNAME ?? "";
   const password = passwordArg ?? process.env.ADMIN_PASSWORD ?? "";
+  const email = emailArg ?? process.env.ADMIN_EMAIL ?? "";
 
   if (!username.trim() || !password) {
-    console.error("Usage: npm run create-admin -- <username> <password>");
-    console.error("Or set ADMIN_USERNAME and ADMIN_PASSWORD in .env.local (one-time bootstrap).");
+    console.error("Usage: npm run create-admin -- <username> <password> [email]");
+    console.error("Or set ADMIN_USERNAME, ADMIN_PASSWORD, and optional ADMIN_EMAIL in .env.local.");
     process.exit(1);
   }
 
   await mongoose.connect(uri);
 
   try {
-    const admin = await createAdminUser(username, password);
+    const admin = await createAdminUser(username, password, email || undefined);
     console.log(`Admin created: ${admin.username} (id: ${admin._id})`);
   } catch (e) {
     console.error(e instanceof Error ? e.message : e);

@@ -112,6 +112,11 @@ export default function AdminLoginPage() {
           >
             {loading ? "Signing in…" : "Login to Dashboard"}
           </button>
+          <p className="text-center text-sm">
+            <a href="/admin/forgot-password" className="text-[#2d5a27] hover:underline">
+              Forgot password?
+            </a>
+          </p>
         </form>
       </div>
     </div>
