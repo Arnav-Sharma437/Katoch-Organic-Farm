@@ -9,8 +9,8 @@ function getSecret() {
   return new TextEncoder().encode(s);
 }
 
-export async function signAdminJwt() {
-  return new SignJWT({ role: "admin" })
+export async function signAdminJwt(admin: { id: string; username: string }) {
+  return new SignJWT({ role: "admin", sub: admin.id, username: admin.username })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime("7d")
