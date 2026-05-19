@@ -1,6 +1,9 @@
 import mongoose from "mongoose";
+import { resolveMongoUri } from "@/lib/mongo-uri";
 
-const uri = process.env.MONGODB_URI;
+function getUri() {
+  return resolveMongoUri();
+}
 
 interface MongooseCache {
   conn: typeof mongoose | null;
@@ -19,9 +22,7 @@ if (!global.mongooseCache) {
 }
 
 export async function connectDB() {
-  if (!uri) {
-    throw new Error("Please define the MONGODB_URI environment variable inside .env.local");
-  }
+  const uri = getUri();
   if (cached.conn) return cached.conn;
   if (!cached.promise) {
     cached.promise = mongoose.connect(uri, {

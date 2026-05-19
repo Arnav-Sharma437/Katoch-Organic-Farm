@@ -25,16 +25,12 @@ export default function AdminLoginPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           username: username.trim(),
-          password: password.trim(),
+          password: password,
         }),
       });
       const data = (await res.json().catch(() => ({}))) as { error?: string };
       if (!res.ok) {
-        if (res.status === 500 && data.error) {
-          setError(data.error);
-        } else {
-          setError("Invalid credentials");
-        }
+        setError(data.error ?? "Login failed. Please try again.");
         return;
       }
       router.push("/admin/dashboard");
@@ -69,7 +65,7 @@ export default function AdminLoginPage() {
         <form className="space-y-4" onSubmit={onSubmit}>
           <div>
             <label className="mb-1 block text-sm font-medium text-slate-700" htmlFor="username">
-              Username
+              Username or email
             </label>
             <input
               id="username"

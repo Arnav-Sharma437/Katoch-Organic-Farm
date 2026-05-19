@@ -4,20 +4,37 @@ import { bootstrapAdminFromEnv, verifyAdminCredentials } from "@/lib/admin-users
 import { connectDB } from "@/lib/mongodb";
 import Admin from "@/models/Admin";
 
+function isDbError(e: unknown): boolean {
+  const err = e as { name?: string; code?: string; message?: string };
+  return (
+    err?.name === "MongoServerError" ||
+    err?.name === "MongooseServerSelectionError" ||
+    err?.code === "ENOTFOUND" ||
+    /MONGODB_URI|ECONNREFUSED|authentication failed|bad auth/i.test(err?.message ?? "")
+  );
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const username = String(body?.username ?? "").trim();
+    const identifier = String(body?.username ?? body?.identifier ?? "").trim();
     const password = String(body?.password ?? "");
 
-    if (!username || !password) {
-      return NextResponse.json({ error: "Username and password are required" }, { status: 400 });
+    if (!identifier || !password) {
+      return NextResponse.json({ error: "Username/email and password are required" }, { status: 400 });
     }
 
-    let admin = await verifyAdminCredentials(username, password);
+    if (!process.env.JWT_SECRET?.trim()) {
+      return NextResponse.json(
+        { error: "Server misconfigured: JWT_SECRET is not set on Vercel." },
+        { status: 500 },
+      );
+    }
+
+    let admin = await verifyAdminCredentials(identifier, password);
 
     if (!admin) {
-      admin = await bootstrapAdminFromEnv(username, password);
+      admin = await bootstrapAdminFromEnv(identifier, password);
     }
 
     if (!admin) {
@@ -27,12 +44,15 @@ export async function POST(request: Request) {
         return NextResponse.json(
           {
             error:
-              "No admin accounts exist yet. Run: npm run create-admin -- <username> <password>",
+              "No admin accounts exist yet. Run: npm run create-admin -- <username> <password> [email]",
           },
           { status: 500 },
         );
       }
-      return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
+      return NextResponse.json(
+        { error: "Invalid username/email or password. Use your username, not only your email, if unsure." },
+        { status: 401 },
+      );
     }
 
     const token = await signAdminJwt({
@@ -52,6 +72,15 @@ export async function POST(request: Request) {
     return res;
   } catch (e) {
     console.error("[auth/login]", e);
-    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+    if (isDbError(e)) {
+      return NextResponse.json(
+        {
+          error:
+            "Database connection failed. In Vercel, set MONGODB_URI with a URL-encoded password (@ → %40) and redeploy.",
+        },
+        { status: 503 },
+      );
+    }
+    return NextResponse.json({ error: "Login failed. Please try again." }, { status: 500 });
   }
 }
